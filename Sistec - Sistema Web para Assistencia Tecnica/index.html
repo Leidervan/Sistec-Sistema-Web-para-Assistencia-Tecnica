@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sistema de Assistência Técnica</title>
+  <!-- Font Awesome para ícones -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- CSS personalizado -->
+  <link rel="stylesheet" href="styles.css">
+  <!-- Vue.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- Layout principal -->
+    <div class="app-container">
+      <!-- Barra lateral -->
+      <aside class="sidebar" :class="{ 'sidebar-collapsed': isSidebarCollapsed }">
+        <div class="sidebar-header">
+          <h2 v-show="!isSidebarCollapsed">AssistTech</h2>
+          <button class="toggle-btn" @click="toggleSidebar">
+            <i class="fas" :class="isSidebarCollapsed ? 'fa-bars' : 'fa-times'"></i>
+          </button>
+        </div>
+        
+        <ul class="sidebar-menu">
+          <li>
+            <a href="#" @click="changePage('dashboard')" :class="{ active: currentPage === 'dashboard' }">
+              <span class="icon"><i class="fas fa-chart-line"></i></span>
+              <span class="menu-text" v-show="!isSidebarCollapsed">Dashboard</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" @click="changePage('clientes')" :class="{ active: currentPage === 'clientes' }">
+              <span class="icon"><i class="fas fa-users"></i></span>
+              <span class="menu-text" v-show="!isSidebarCollapsed">Clientes</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" @click="changePage('equipamentos')" :class="{ active: currentPage === 'equipamentos' }">
+              <span class="icon"><i class="fas fa-laptop"></i></span>
+              <span class="menu-text" v-show="!isSidebarCollapsed">Equipamentos</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" @click="changePage('pecas')" :class="{ active: currentPage === 'pecas' }">
+              <span class="icon"><i class="fas fa-cogs"></i></span>
+              <span class="menu-text" v-show="!isSidebarCollapsed">Peças</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" @click="changePage('fornecedores')" :class="{ active: currentPage === 'fornecedores' }">
+              <span class="icon"><i class="fas fa-truck"></i></span>
+              <span class="menu-text" v-show="!isSidebarCollapsed">Fornecedores</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" @click="changePage('orcamento')" :class="{ active: currentPage === 'orcamento' }">
+              <span class="icon"><i class="fas fa-file-invoice-dollar"></i></span>
+              <span class="menu-text" v-show="!isSidebarCollapsed">Orçamentos</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" @click="changePage('lancamento')" :class="{ active: currentPage === 'lancamento' }">
+              <span class="icon"><i class="fas fa-tools"></i></span>
+              <span class="menu-text" v-show="!isSidebarCollapsed">Reparos</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" @click="changePage('estoque')" :class="{ active: currentPage === 'estoque' }">
+              <span class="icon"><i class="fas fa-boxes"></i></span>
+              <span class="menu-text" v-show="!isSidebarCollapsed">Estoque</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" @click="changePage('relatorios')" :class="{ active: currentPage === 'relatorios' }">
+              <span class="icon"><i class="fas fa-chart-bar"></i></span>
+              <span class="menu-text" v-show="!isSidebarCollapsed">Relatórios</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" @click="changePage('config')" :class="{ active: currentPage === 'config' }">
+              <span class="icon"><i class="fas fa-cog"></i></span>
+              <span class="menu-text" v-show="!isSidebarCollapsed">Configurações</span>
+            </a>
+          </li>
+        </ul>
+      </aside>
+
+      <!-- Conteúdo principal -->
+      <div class="content-container" :class="{ 'content-expanded': isSidebarCollapsed }">
+        <!-- Header do conteúdo -->
+        <div class="content-header">
+          <h1 class="content-title">{{ pageTitle }}</h1>
+          <div id="clock">{{ currentTime }}</div>
+        </div>
+        
+        <!-- Alerta para mensagens do sistema -->
+        <div class="alert" :class="'alert-' + alertType" v-if="showAlert">
+          <span class="alert-icon">
+            <i class="fas" :class="alertIcon"></i>
+          </span>
+          <span>{{ alertMessage }}</span>
+        </div>
+
+        <!-- Dashboard -->
+        <div v-if="currentPage === 'dashboard'" class="section-content">
+          <h2>Dashboard</h2>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+            <div class="cadastro-bloco">
+              <h3><i class="fas fa-users"></i> Clientes</h3>
+              <p style="font-size: 2rem; font-weight: bold; text-align: center;">{{ clientes.length }}</p>
+            </div>
+            <div class="cadastro-bloco">
+              <h3><i class="fas fa-tools"></i> Reparos</h3>
+              <p style="font-size: 2rem; font-weight: bold; text-align: center;">{{ reparos.length }}</p>
+            </div>
+            <div class="cadastro-bloco">
+              <h3><i class="fas fa-boxes"></i> Peças em Estoque</h3>
+              <p style="font-size: 2rem; font-weight: bold; text-align: center;">{{ estoqueTotal }}</p>
+            </div>
+            <div class="cadastro-bloco">
+              <h3><i class="fas fa-file-invoice-dollar"></i> Orçamentos</h3>
+              <p style="font-size: 2rem; font-weight: bold; text-align: center;">{{ orcamentos.length }}</p>
+            </div>
+          </div>
+          
+          <div class="cadastro-bloco" style="margin-top: 20px;">
+            <h3>Reparos Recentes</h3>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Equipamento</th>
+                    <th>Data</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(reparo, index) in recentReparos" :key="index">
+                    <td>{{ reparo.cliente }}</td>
+                    <td>{{ reparo.equipamento }}</td>
+                    <td>{{ formatDate(reparo.data_reparo) }}</td>
+                    <td>
+                      <span class="badge" :class="'badge-' + reparo.statusClass">
+                        {{ reparo.status }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Listagem de Clientes -->
+        <div v-if="currentPage === 'clientes'" class="section-content">
+          <div class="filter-row">
+            <div class="search-box">
+              <i class="fas fa-search"></i>
+              <input type="text" placeholder="Buscar cliente..." v-model="filtroCliente">
+            </div>
+            <button class="btn" @click="showCadastroCliente = true" style="background: #3498db; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer;">
+              <i class="fas fa-plus"></i> Novo Cliente
+            </button>
+          </div>
+          
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>CPF</th>
+                  <th>Telefone</th>
+                  <th>Cidade</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(cliente, index) in clientesFiltrados" :key="index">
+                  <td>{{ cliente.nome }} {{ cliente.sobrenome }}</td>
+                  <td>{{ formatarCPF(cliente.cpf) }}</td>
+                  <td>{{ cliente.celular }}</td>
+                  <td>{{ cliente.cidade }}/{{ cliente.estado }}</td>
+                  <td class="actions">
+                    <button class="edit" @click="editarCliente(index)">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="delete" @click="confirmarExclusao('cliente', index)">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Formulário de Cadastro de Cliente (exibido quando necessário) -->
+          <div v-if="showCadastroCliente" class="cadastro-bloco">
+            <h3>{{ editingIndex === null ? 'Novo Cliente' : 'Editar Cliente' }}</h3>
+            <form id="formCliente" @submit.prevent="salvarCliente">
+              <div class="form-group">
+                <label for="nome">Nome</label>
+                <input type="text" id="nome" v-model="formCliente.nome" required>
+              </div>
+              <div class="form-group">
+                <label for="sobrenome">Sobrenome</label>
+                <input type="text" id="sobrenome" v-model="formCliente.sobrenome" required>
+              </div>
+              <div class="form-group">
+                <label for="cpf">CPF</label>
+                <input type="text" id="cpf" v-model="formCliente.cpf" required pattern="\d{11}" title="Digite 11 dígitos">
+              </div>
+              <div class="form-group">
+                <label for="rg">RG</label>
+                <input type="text" id="rg" v-model="formCliente.rg" required>
+              </div>
+              <div class="form-group">
+                <label for="sexo">Sexo</label>
+                <select id="sexo" v-model="formCliente.sexo" required>
+                  <option value="">Selecione o Sexo</option>
+                  <option value="Masculino">Masculino</option>
+                  <option value="Feminino">Feminino</option>
+                  <option value="Outro">Outro</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="telefone">Telefone Fixo</label>
+                <input type="tel" id="telefone" v-model="formCliente.telefone">
+              </div>
+              <div class="form-group">
+                <label for="celular">Telefone Celular</label>
+                <input type="tel" id="celular" v-model="formCliente.celular" required>
+              </div>
+              <div class="form-group">
+                <label for="data_nascimento">Data de Nascimento</label>
+                <input type="date" id="data_nascimento" v-model="formCliente.data_nascimento" @change="calcularIdade" required>
+              </div>
+              <div class="form-group">
+                <label for="idade">Idade</label>
+                <input type="number" id="idade" v-model="formCliente.idade" readonly>
+              </div>
+              <div class="form-group">
+                <label for="rua">Rua</label>
+                <input type="text" id="rua" v-model="formCliente.rua" required>
+              </div>
+              <div class="form-group">
+                <label for="bairro">Bairro</label>
+                <input type="text" id="bairro" v-model="formCliente.bairro" required>
+              </div>
+              <div class="form-group">
+                <label for="numero_residencia">Número</label>
+                <input type="text" id="numero_residencia" v-model="formCliente.numero_residencia" required>
+              </div>
+              <div class="form-group">
+                <label for="cidade">Cidade</label>
+                <input type="text" id="cidade" v-model="formCliente.cidade" required>
+              </div>
+              <div class="form-group">
+                <label for="estado">Estado</label>
+                <input type="text" id="estado" v-model="formCliente.estado" required>
+              </div>
+              <div class="form-group">
+                <label for="pais">País</label>
+                <input type="text" id="pais" v-model="formCliente.pais" required>
+              </div>
+              <div class="form-group" style="grid-column: 1 / -1; display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" @click="showCadastroCliente = false" style="background: #95a5a6;">Cancelar</button>
+                <button type="submit">{{ editingIndex === null ? 'Salvar Cliente' : 'Atualizar Cliente' }}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Listagem de Peças -->
+        <div v-if="currentPage === 'pecas'" class="section-content">
+          <div class="filter-row">
+            <div class="search-box">
+              <i class="fas fa-search"></i>
+              <input type="text" placeholder="Buscar peça..." v-model="filtroPeca">
+            </div>
+            <button class="btn" @click="showCadastroPeca = true" style="background: #3498db; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer;">
+              <i class="fas fa-plus"></i> Nova Peça
+            </button>
+          </div>
+          
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Fabricante</th>
+                  <th>Quantidade</th>
+                  <th>Preço</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(peca, index) in pecasFiltradas" :key="index">
+                  <td>{{ peca.peca }}</td>
+                  <td>{{ peca.fabricante }}</td>
+                  <td>{{ peca.quantidade }}</td>
+                  <td>R$ {{ peca.preco.toFixed(2) }}</td>
+                  <td class="actions">
+                    <button class="edit" @click="editarPeca(index)">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="delete" @click="confirmarExclusao('peca', index)">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Formulário de Cadastro de Peça (exibido quando necessário) -->
+          <div v-if="showCadastroPeca" class="cadastro-bloco">
+            <h3>{{ editingIndex === null ? 'Nova Peça' : 'Editar Peça' }}</h3>
+            <form id="formPeca" @submit.prevent="salvarPeca">
+              <div class="form-group">
+                <label for="peca">Nome da Peça</label>
+                <input type="text" id="peca" v-model="formPeca.peca" required>
+              </div>
+              <div class="form-group">
+                <label for="fabricante">Fabricante</label>
+                <input type="text" id="fabricante" v-model="formPeca.fabricante" required>
+              </div>
+              <div class="form-group">
+                <label for="local_fabricacao">Local de Fabricação</label>
+                <input type="text" id="local_fabricacao" v-model="formPeca.local_fabricacao" required>
+              </div>
+              <div class="form-group">
+                <label for="peso">Peso da Peça (kg)</label>
+                <input type="number" id="peso" v-model="formPeca.peso" required step="0.01">
+              </div>
+              <div class="form-group">
+                <label for="quantidade">Quantidade</label>
+                <input type="number" id="quantidade" v-model="formPeca.quantidade" required min="1">
+              </div>
+              <div class="form-group">
+                <label for="preco">Preço</label>
+                <input type="number" id="preco" v-model="formPeca.preco" required step="0.01">
+              </div>
+              <div class="form-group" style="grid-column: 1 / -1; display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" @click="showCadastroPeca = false" style="background: #95a5a6;">Cancelar</button>
+                <button type="submit">{{ editingIndex === null ? 'Salvar Peça' : 'Atualizar Peça' }}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Listagem de Fornecedores -->
+        <div v-if="currentPage === 'fornecedores'" class="section-content">
+          <div class="filter-row">
+            <div class="search-box">
+              <i class="fas fa-search"></i>
+              <input type="text" placeholder="Buscar fornecedor..." v-model="filtroFornecedor">
+            </div>
+            <button class="btn" @click="showCadastroFornecedor = true" style="background: #3498db; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer;">
+              <i class="fas fa-plus"></i> Novo Fornecedor
+            </button>
+          </div>
+          <!-- Conteúdo adicional para fornecedores será adicionado aqui -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script src="script.js"></script>
+</body>
+</html>
